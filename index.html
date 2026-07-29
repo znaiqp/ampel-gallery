@@ -7,6 +7,51 @@
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+<!-- ============ LANDING : floating photo sphere -> arc ============ -->
+<div class="landing" id="landing" hidden>
+  <nav class="landing__nav">
+    <span>ARCHIVE</span>
+    <span class="is-current">SPHERE</span>
+    <span id="landingArcNav">ARRANGE</span>
+    <span class="landing__dot"></span>
+  </nav>
+
+  <div class="sphere-stage" id="sphereStage">
+    <div class="sphere" id="sphere"></div>
+  </div>
+
+  <!-- Paprika-style selection layout: numbered index on both edges, pick centered -->
+  <div class="gallery" id="gallery" hidden>
+    <ol class="gallery__col" id="galleryL"></ol>
+    <div class="gallery__center">
+      <div class="gallery__frame"><img id="galleryImg" alt="" /></div>
+      <div class="gallery__label">
+        <span class="gallery__city" id="galleryCity"></span>
+        <span class="gallery__code" id="galleryCode"></span>
+      </div>
+      <p class="gallery__hint">가운데 이미지를 다시 누르면 → 점 매트릭스에서 나만의 픽토그램 만들기</p>
+    </div>
+    <ol class="gallery__col" id="galleryR"></ol>
+  </div>
+
+  <div class="landing__caption" id="landingCaption">
+    <p class="landing__kicker">Your journey becomes its own grid</p>
+    <h1 class="landing__title" id="landingTitle">세계의 신호등</h1>
+  </div>
+
+  <div class="landing__hint" id="landingHint">
+    손바닥으로 굴리거나 드래그해서 밀어보세요 · 사진을 클릭하면 배치가 시작됩니다
+  </div>
+
+  <div class="landing__actions">
+    <button class="btn" id="landingGesture">손동작</button>
+    <button class="btn" id="landingPico">＋ 신호등 만들기</button>
+    <button class="btn btn--solid" id="landingEnter">그리드 편집 →</button>
+  </div>
+  <button class="btn landing__back" id="landingBack" hidden>← 구(球)로 돌아가기</button>
+</div>
+
 <div id="app" class="app">
 
   <!-- ============ LEFT : IMAGE INDEX ============ -->
@@ -79,6 +124,7 @@
       <input type="text" id="cmdInput" class="cmdbar__input"
              placeholder="명령을 입력하세요 —  예: “사진을 촬영 시간순으로 정리해 줘”" />
       <button class="btn btn--solid" id="cmdRun">실행</button>
+      <button class="btn" id="btnPico" title="점 매트릭스 신호등 픽토그램 만들기">픽토그램</button>
       <button class="btn" id="btnGesture" title="웹캠 손동작 편집">손동작</button>
     </footer>
   </main>
@@ -103,6 +149,40 @@
   <div class="toast" id="toast" hidden></div>
 </div>
 
+<!-- ============ PICTOGRAM : dot-matrix signal maker ============ -->
+<div class="pico" id="pico" hidden>
+  <nav class="landing__nav">
+    <span>SIGNAL</span><span class="is-current">PICTOGRAM</span><span class="landing__dot"></span>
+  </nav>
+  <div class="pico-head">
+    <h1>나만의 신호등 픽토그램</h1>
+    <p>회색 점 위를 <b>드래그</b>하면 켜집니다 · 손동작 모드에서는 <b>손가락</b>으로 그릴 수 있어요</p>
+  </div>
+  <div class="pico-stage">
+    <div class="pico-housing">
+      <canvas id="picoCanvas"></canvas>
+    </div>
+  </div>
+  <div class="pico-tools">
+    <div class="pico-swatches" id="picoSwatches">
+      <button class="pico-sw is-active" data-color="green" style="--c:#22c55e" title="초록"></button>
+      <button class="pico-sw" data-color="red" style="--c:#ef4444" title="빨강"></button>
+      <button class="pico-sw" data-color="amber" style="--c:#f5a623" title="노랑"></button>
+      <button class="pico-sw pico-sw--erase" data-color="erase" title="지우개">⌫</button>
+    </div>
+    <div class="pico-actions">
+      <button class="btn" id="picoUndo">되돌리기</button>
+      <button class="btn" id="picoClear">전체 지우기</button>
+      <button class="btn" id="picoGesture">손동작</button>
+      <button class="btn btn--solid" id="picoSave">PNG 저장</button>
+      <button class="btn" id="picoClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- gesture pointer dot (shown while drawing by hand) -->
+<div class="hand-cursor" id="handCursor" hidden></div>
+
 <!-- offscreen canvas for export -->
 <canvas id="exportCanvas" hidden></canvas>
 
@@ -119,6 +199,8 @@
 <script src="js/commands.js"></script>
 <script src="js/export.js"></script>
 <script src="js/gesture.js"></script>
+<script src="js/landing.js"></script>
+<script src="js/picogram.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

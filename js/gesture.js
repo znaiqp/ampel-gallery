@@ -125,6 +125,20 @@ window.TJ = window.TJ || {};
       ctx.fillStyle = TJ.Store.get().accent || "#ffffff";
       hands.forEach((lm) => lm.forEach((p) => { ctx.beginPath(); ctx.arc(p.x * cv.width, p.y * cv.height, 4, 0, 7); ctx.fill(); }));
 
+      // pictogram mode: hand draws dots
+      if (TJ.pico && TJ.pico.isActive()) {
+        TJ.pico.onHand(hands);
+        return;
+      }
+
+      // landing (sphere) mode: palm spins the sphere instead of moving items
+      if (TJ.landing && TJ.landing.isActive()) {
+        if (!hands.length) { this.setHud("손 없음"); return; }
+        this.setHud("손바닥으로 구를 굴리거나, 오므려 사진 선택");
+        TJ.landing.onHand(hands);
+        return;
+      }
+
       if (!hands.length) { this.setHud("손 없음"); this.twoHandBase = null; this.pinchStable = 0; return; }
       if (hands.length >= 2) { this.handleTwoHands(hands); return; }
       this.twoHandBase = null;

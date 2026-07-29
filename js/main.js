@@ -94,6 +94,7 @@ window.TJ = window.TJ || {};
 
       TJ.$("#btnGesture").addEventListener("click", () => TJ.gesture.toggle());
       TJ.$("#gestureStop").addEventListener("click", () => TJ.gesture.stop());
+      TJ.$("#btnPico").addEventListener("click", () => TJ.pico.show("editor"));
 
       // command bar
       const runCmd = () => {
@@ -121,6 +122,7 @@ window.TJ = window.TJ || {};
 
     async boot() {
       TJ.editor.init();
+      TJ.pico.init();
       this.bind();
       TJ.applyAccent();
       this.syncTopbar();
@@ -132,6 +134,11 @@ window.TJ = window.TJ || {};
       }
       this.syncTopbar();
       TJ.rerender();
+
+      // main screen is always the rotating signal globe (when tiles are available);
+      // any restored work stays underneath and is reachable via "그리드 편집".
+      try { await TJ.landing.init(false); } catch (e) { console.error(e); }
+
       if (!restored) TJ.$("#cmdInput").setAttribute("placeholder",
         "명령 입력 —  “촬영 시간순으로 정리”, “밤 사진을 오른쪽에”, “제목을 왼쪽 위에 크게”");
     },

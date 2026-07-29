@@ -9,3 +9,7 @@ desktop.ini
 # logs / temp
 *.log
 node_modules/
+
+# assets/lights/ holds copyright-free generated SVG signal tiles and IS committed.
+# (Personal photo folders should be added here to keep them out of a public deploy.)
+

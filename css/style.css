@@ -39,6 +39,7 @@
 }
 
 *{ box-sizing:border-box; }
+[hidden]{ display:none !important; }   /* beat author display rules (.btn etc.) */
 html,body{ height:100%; margin:0; }
 body{
   font-family:var(--font);
@@ -293,6 +294,139 @@ button{ font-family:inherit; }
   position:fixed; left:50%; bottom:70px; transform:translateX(-50%);
   background:var(--ink); color:#fff; font-size:12px; letter-spacing:.02em;
   padding:9px 16px; z-index:300; box-shadow:0 10px 30px -12px rgba(0,0,0,.5);
+}
+
+/* ============================================================
+   LANDING — floating photo sphere -> arc arrangement
+   ============================================================ */
+.landing{
+  position:fixed; inset:0; z-index:400; background:var(--paper);
+  overflow:hidden; display:block;
+}
+.landing__nav{
+  position:absolute; top:22px; left:0; right:0; z-index:3;
+  display:flex; justify-content:center; gap:34px;
+  font-size:11px; letter-spacing:.24em; color:var(--grey-3);
+}
+.landing__nav .is-current{ color:var(--ink); }
+.landing__nav span{ cursor:default; }
+.landing__nav #landingArcNav{ cursor:pointer; }
+.landing__dot{ position:absolute; right:26px; top:-2px; width:6px; height:6px; background:var(--ink); border-radius:50%; }
+
+.sphere-stage{
+  position:absolute; inset:0; z-index:1;
+  display:flex; align-items:center; justify-content:center;
+  perspective:1200px; perspective-origin:50% 46%;
+  touch-action:none; cursor:grab;
+}
+.sphere-stage:active{ cursor:grabbing; }
+.sphere{
+  position:relative; width:1px; height:1px;
+  transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  will-change:transform;
+}
+.sphere-item{
+  position:absolute; left:0; top:0;
+  width:112px; height:84px; margin:-42px -56px;
+  overflow:hidden; background:var(--grey-2);
+  box-shadow:0 8px 22px -14px rgba(0,0,0,.55);
+  cursor:pointer; backface-visibility:hidden;
+  transition:outline-color .15s;
+  outline:1px solid transparent;
+}
+.sphere-item img{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+.sphere-item:hover{ outline:2px solid var(--accent); }
+
+.landing__caption{
+  position:absolute; left:0; right:0; bottom:60px; z-index:2;
+  text-align:center; pointer-events:none;
+}
+/* pure sphere on the main screen (ref 1): title only appears in arrange mode */
+.landing:not(.is-arc) .landing__title{ display:none; }
+.landing__kicker{ margin:0 0 8px; font-size:12px; letter-spacing:.06em; color:var(--grey-4); }
+.landing__title{
+  margin:0; font-family:var(--font-display); font-weight:400;
+  font-size:40px; letter-spacing:.01em; color:var(--ink);
+}
+.landing__hint{
+  position:absolute; left:0; right:0; bottom:28px; z-index:2;
+  text-align:center; font-size:11px; letter-spacing:.03em; color:var(--grey-3);
+}
+.landing__actions{ position:absolute; right:22px; bottom:24px; z-index:3; display:flex; gap:8px; }
+.landing__back{ position:absolute; left:22px; bottom:24px; z-index:3; }
+
+/* gallery (selection) mode — Paprika: numbered index on both edges, pick centered */
+.landing.is-gallery .sphere-stage{ display:none; }
+.gallery{
+  position:absolute; inset:0; z-index:2;
+  display:grid; grid-template-columns:120px 1fr 120px; gap:0;
+  padding:64px 26px 92px;
+}
+.gallery__col{
+  list-style:none; margin:0; padding:0; overflow-y:auto; overflow-x:hidden;
+  display:flex; flex-direction:column; gap:14px;
+}
+.gallery__col::-webkit-scrollbar{ width:0; }
+.gcell{
+  display:grid; grid-template-columns:1fr auto; align-items:center; gap:6px; cursor:pointer;
+}
+.gcell img{
+  width:100%; height:auto; border:1px solid var(--line); background:var(--grey-1);
+  grid-column:1 / -1;
+}
+.gcell__no{ grid-column:1 / -1; font-size:10px; color:var(--grey-4); font-variant-numeric:tabular-nums; letter-spacing:.04em; }
+.gcell:hover img{ border-color:var(--ink); }
+.gcell.is-current img{ outline:2px solid var(--accent); }
+.gcell.is-current .gcell__no{ color:var(--ink); }
+
+.gallery__center{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
+.gallery__frame{
+  max-width:320px; max-height:64vh; background:var(--grey-1); cursor:pointer;
+  box-shadow:0 24px 60px -30px rgba(0,0,0,.5);
+  transition:box-shadow .15s;
+}
+.gallery__frame:hover{ box-shadow:0 24px 60px -24px rgba(0,0,0,.6), 0 0 0 2px var(--accent); }
+.gallery__hint{ margin:0; font-size:11px; letter-spacing:.02em; color:var(--grey-4); }
+.gallery__frame img{ display:block; max-width:320px; max-height:64vh; width:auto; height:auto; }
+.gallery__label{ text-align:center; }
+.gallery__city{ display:block; font-family:var(--font-display); font-size:30px; letter-spacing:.01em; }
+.gallery__code{ display:block; font-size:11px; letter-spacing:.22em; color:var(--grey-4); margin-top:4px; }
+
+/* ============================================================
+   PICTOGRAM — dot-matrix signal maker
+   ============================================================ */
+.pico{
+  position:fixed; inset:0; z-index:450; background:var(--paper);
+  display:flex; flex-direction:column; align-items:center;
+}
+.pico-head{ text-align:center; margin-top:58px; }
+.pico-head h1{ margin:0 0 6px; font-family:var(--font-display); font-weight:400; font-size:30px; }
+.pico-head p{ margin:0; font-size:12px; color:var(--grey-4); letter-spacing:.02em; }
+.pico-head b{ color:var(--ink); font-weight:700; }
+.pico-stage{ flex:1; display:flex; align-items:center; justify-content:center; min-height:0; width:100%; }
+.pico-housing{
+  background:#141414; padding:22px; border-radius:26px;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.6);
+}
+#picoCanvas{ display:block; touch-action:none; cursor:crosshair; border-radius:8px; }
+
+.pico-tools{
+  display:flex; align-items:center; gap:22px; padding:16px 0 30px;
+}
+.pico-swatches{ display:flex; gap:8px; }
+.pico-sw{
+  width:30px; height:30px; border:1px solid var(--line); background:var(--c,#22c55e);
+  cursor:pointer; padding:0; color:#fff; font-size:13px; line-height:1;
+}
+.pico-sw--erase{ background:var(--paper); color:var(--ink); }
+.pico-sw.is-active{ outline:2px solid var(--ink); outline-offset:2px; }
+.pico-actions{ display:flex; gap:8px; }
+
+.hand-cursor{
+  position:fixed; z-index:500; width:26px; height:26px; margin:-13px 0 0 -13px;
+  border:2px solid #22c55e; border-radius:50%; pointer-events:none;
+  box-shadow:0 0 0 3px rgba(34,197,94,.25);
 }
 
 /* responsiveness: collapse side panels on narrow screens */
