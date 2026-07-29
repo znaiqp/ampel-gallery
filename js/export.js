@@ -40,7 +40,7 @@ window.TJ = window.TJ || {};
   }
 
   async function deserialize(pkg) {
-    if (!pkg || pkg.app !== "travel-journal") throw new Error("형식이 올바르지 않습니다.");
+    if (!pkg || pkg.app !== "travel-journal") throw new Error("Invalid file format.");
     TJ.photos.clear();
     const entries = Object.values(pkg.photos || {});
     let maxOrder = 0;
@@ -65,9 +65,9 @@ window.TJ = window.TJ || {};
     save() {
       try {
         localStorage.setItem(LS_KEY, JSON.stringify(serialize()));
-        TJ.toast("브라우저에 저장했습니다.");
+        TJ.toast("Saved to your browser.");
       } catch (e) {
-        TJ.toast("저장 실패 — 사진이 너무 많을 수 있습니다.");
+        TJ.toast("Save failed — too many photos, perhaps.");
         console.error(e);
       }
     },
@@ -91,8 +91,8 @@ window.TJ = window.TJ || {};
     },
     async import(file) {
       const text = await file.text();
-      try { await deserialize(JSON.parse(text)); TJ.toast("프로젝트를 불러왔습니다."); }
-      catch (e) { TJ.toast("불러오기 실패 — 파일을 확인하세요."); console.error(e); }
+      try { await deserialize(JSON.parse(text)); TJ.toast("Project loaded."); }
+      catch (e) { TJ.toast("Import failed — check the file."); console.error(e); }
     },
   };
 
@@ -178,7 +178,7 @@ window.TJ = window.TJ || {};
   function exportPNG(scale) {
     const cv = renderToCanvas(scale || 3);
     cv.toBlob((blob) => TJ.download(blob, "journal-" + Date.now() + ".png"), "image/png");
-    TJ.toast(`PNG 내보내기 — ${cv.width}×${cv.height}px`);
+    TJ.toast(`PNG exported — ${cv.width}×${cv.height}px`);
   }
 
   /* ---------- minimal PDF (single JPEG image, DCTDecode) ---------- */
@@ -225,8 +225,8 @@ window.TJ = window.TJ || {};
       const jpeg = dataURLToBytes(cv.toDataURL("image/jpeg", 0.92));
       const pdf = buildPDF(jpeg, cv.width, cv.height);
       TJ.download(new Blob([pdf], { type: "application/pdf" }), "journal-" + Date.now() + ".pdf");
-      TJ.toast("PDF 내보내기 완료");
-    } catch (e) { console.error(e); TJ.toast("PDF 내보내기 실패"); }
+      TJ.toast("PDF exported");
+    } catch (e) { console.error(e); TJ.toast("PDF export failed"); }
   }
 
   TJ.persist = Persist;

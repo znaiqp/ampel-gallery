@@ -310,7 +310,8 @@ button{ font-family:inherit; }
 }
 .landing__nav .is-current{ color:var(--ink); }
 .landing__nav span{ cursor:default; }
-.landing__nav #landingArcNav{ cursor:pointer; }
+.landing__nav .nav-link{ cursor:pointer; }
+.landing__nav .nav-link:hover{ color:var(--ink); }
 .landing__dot{ position:absolute; right:26px; top:-2px; width:6px; height:6px; background:var(--ink); border-radius:50%; }
 
 .sphere-stage{
@@ -405,11 +406,40 @@ button{ font-family:inherit; }
 .pico-head p{ margin:0; font-size:12px; color:var(--grey-4); letter-spacing:.02em; }
 .pico-head b{ color:var(--ink); font-weight:700; }
 .pico-stage{ flex:1; display:flex; align-items:center; justify-content:center; min-height:0; width:100%; }
+/* realistic pedestrian-signal front housing */
 .pico-housing{
-  background:#141414; padding:22px; border-radius:26px;
-  box-shadow:0 30px 70px -30px rgba(0,0,0,.6);
+  position:relative;
+  background:linear-gradient(158deg,#2b2b2b 0%,#141414 45%,#080808 100%);
+  padding:30px; border-radius:24px; border:1px solid #000;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.09), inset 0 -8px 26px rgba(0,0,0,.7),
+             0 44px 90px -34px rgba(0,0,0,.75);
 }
-#picoCanvas{ display:block; touch-action:none; cursor:crosshair; border-radius:8px; }
+.pico-housing::before{                 /* visor / hood over the top edge */
+  content:""; position:absolute; left:16px; right:16px; top:-11px; height:18px;
+  background:linear-gradient(#333,#101010); border-radius:13px 13px 5px 5px;
+  box-shadow:0 7px 12px -5px rgba(0,0,0,.7); z-index:1;
+}
+.pico-window{
+  position:relative; background:#070707; border-radius:12px; padding:12px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05), inset 0 10px 30px rgba(0,0,0,.95);
+}
+/* faint reference: the selected signal photo shows through behind the dots */
+.pico-ref{
+  position:absolute; inset:12px; border-radius:5px;
+  background-size:cover; background-position:center; opacity:0; transition:opacity .4s;
+}
+.pico-ref.is-on{ opacity:.32; }
+#picoCanvas{ position:relative; z-index:1; display:block; touch-action:none; cursor:crosshair; border-radius:5px; }
+.pico.is-lit .pico-ref{ opacity:0; }   /* screen goes black on activation */
+.pico-bolt{
+  position:absolute; width:10px; height:10px; border-radius:50%; z-index:2;
+  background:radial-gradient(circle at 35% 30%, #b3b3b3, #4a4a4a 65%, #171717);
+  box-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+.pico-bolt--tl{ left:12px; top:12px; }
+.pico-bolt--tr{ right:12px; top:12px; }
+.pico-bolt--bl{ left:12px; bottom:12px; }
+.pico-bolt--br{ right:12px; bottom:12px; }
 
 .pico-tools{
   display:flex; align-items:center; gap:22px; padding:16px 0 30px;
@@ -427,7 +457,8 @@ button{ font-family:inherit; }
 .pico.is-lit{ background:#000; transition:background .4s; }
 .pico.is-lit .pico-head h1{ color:#fff; }
 .pico.is-lit .pico-head p{ color:#22c55e; letter-spacing:.04em; }
-.pico.is-lit .pico-housing{ box-shadow:0 0 0 1px rgba(34,197,94,.4), 0 0 80px -10px rgba(34,197,94,.55); }
+.pico.is-lit .pico-housing{ box-shadow:inset 0 2px 0 rgba(255,255,255,.06), 0 0 90px -6px rgba(34,197,94,.5); }
+.pico.is-lit .pico-window{ box-shadow:inset 0 0 0 1px rgba(34,197,94,.45), inset 0 10px 30px rgba(0,0,0,.9), 0 0 46px rgba(34,197,94,.3); }
 .pico.is-lit .pico-tools .btn{ background:#111; color:#fff; border-color:#333; }
 .pico.is-lit .pico-tools .btn--solid{ background:#22c55e; color:#08210f; border-color:#22c55e; }
 
@@ -479,7 +510,29 @@ button{ font-family:inherit; }
   position:absolute; left:0; right:0; top:34px; text-align:center;
   color:rgba(255,255,255,.9); font-size:12px; letter-spacing:.14em;
 }
+.ar__brand{
+  position:absolute; left:50%; bottom:78px; transform:translateX(-50%);
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 16px; border-radius:11px; text-decoration:none;
+  font-size:12px; letter-spacing:.06em; color:#fff; white-space:nowrap;
+}
+.ar__brand .ar__brand-k{ opacity:.7; letter-spacing:.22em; font-size:10px; }
+.ar__brand:hover{ background:rgba(255,255,255,.24); }
 .ar__actions{ position:absolute; left:0; right:0; bottom:30px; display:flex; gap:10px; justify-content:center; }
+
+/* top-right close button, shared by landing / pictogram / AR overlays */
+.nav-x{
+  position:absolute; top:16px; right:20px; z-index:6;
+  width:34px; height:34px; border:1px solid var(--line); background:var(--paper);
+  color:var(--ink); font-size:15px; line-height:1; cursor:pointer; border-radius:2px;
+  display:flex; align-items:center; justify-content:center;
+}
+.nav-x:hover{ border-color:var(--ink); }
+.nav-x--light{
+  background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.32); color:#fff;
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-radius:9px;
+}
+.nav-x--light:hover{ background:rgba(255,255,255,.28); }
 .glass-btn{
   background:rgba(255,255,255,.14);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
@@ -488,6 +541,31 @@ button{ font-family:inherit; }
   border-radius:10px; transition:background .15s;
 }
 .glass-btn:hover{ background:rgba(255,255,255,.26); }
+
+/* ============================================================
+   ARCHIVE — signals you have made
+   ============================================================ */
+.archive{ position:fixed; inset:0; z-index:460; background:var(--paper); overflow-y:auto; }
+.archive__head{ text-align:center; margin:58px 0 28px; padding:0 20px; }
+.archive__head h1{ margin:0 0 6px; font-family:var(--font-display); font-weight:400; font-size:34px; }
+.archive__head p{ margin:0; font-size:12px; color:var(--grey-4); letter-spacing:.02em; }
+.archive__grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:18px; padding:0 40px 60px; max-width:1100px; margin:0 auto;
+}
+.arch-cell{ border:1px solid var(--line); background:#000; position:relative; }
+.arch-cell img{ display:block; width:100%; height:auto; }
+.arch-cell__meta{
+  display:flex; justify-content:space-between; gap:6px; padding:7px 9px;
+  font-size:10px; letter-spacing:.04em; color:#fff; background:#000;
+  font-variant-numeric:tabular-nums;
+}
+.arch-cell__del{
+  position:absolute; top:6px; right:6px; width:22px; height:22px; border:0; cursor:pointer;
+  background:rgba(0,0,0,.55); color:#fff; font-size:12px; line-height:1; border-radius:2px;
+}
+.arch-cell__del:hover{ background:rgba(0,0,0,.85); }
+.archive__empty{ text-align:center; color:var(--grey-4); font-size:13px; padding:40px 20px; }
 
 /* responsiveness: collapse side panels on narrow screens */
 @media (max-width:1080px){

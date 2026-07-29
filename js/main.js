@@ -18,19 +18,19 @@ window.TJ = window.TJ || {};
   const Main = {
     async addFiles(files) {
       const added = await TJ.importFiles(files);
-      if (!added.length) { TJ.toast("불러올 이미지가 없습니다."); return; }
+      if (!added.length) { TJ.toast("No images to import."); return; }
       // adopt accent from first import if project still default
       const s = TJ.Store.get();
       if (s.accent === "#111111" && added[0]) { TJ.Store.update((st) => { st.accent = added[0].accent; }, "accent-auto"); TJ.applyAccent(); }
       TJ.index.render();
-      TJ.toast(`${added.length}장 불러옴 — 인덱스에서 캔버스로 끌어오세요.`);
+      TJ.toast(`${added.length} imported — drag from the index onto the canvas.`);
       TJ.persist.autosave();
     },
 
     addMetaText(key) {
       const s = TJ.Store.get();
       const val = s.meta[key];
-      if (!val) { TJ.toast("먼저 " + ({ title: "제목", place: "장소", date: "날짜", note: "메모" }[key] || key) + "을(를) 입력하세요."); return; }
+      if (!val) { TJ.toast("Enter a " + ({ title: "title", place: "place", date: "date", note: "note" }[key] || key) + " first."); return; }
       const role = ({ title: "title", place: "place", date: "date", note: "note" }[key]) || "custom";
       const it = TJ.typography.create(role, val);
       TJ.Store.commit((st) => TJ.Store.addItem(it), "add-text");
@@ -51,10 +51,10 @@ window.TJ = window.TJ || {};
       const s = TJ.Store.get();
       const usedPhoto = s.items.find((i) => i.type === "photo");
       const p = usedPhoto ? TJ.photos.get(usedPhoto.photoId) : TJ.photos.all().sort((a, b) => a.order - b.order)[0];
-      if (!p) { TJ.toast("사진이 없습니다."); return; }
+      if (!p) { TJ.toast("No photos available."); return; }
       TJ.Store.commit((st) => { st.accent = p.accent; }, "accent");
       TJ.applyAccent(); TJ.rerender();
-      TJ.toast("강조색을 다시 추출했습니다.");
+      TJ.toast("Accent colour re-extracted.");
     },
 
     syncTopbar() {
@@ -95,6 +95,7 @@ window.TJ = window.TJ || {};
       TJ.$("#btnGesture").addEventListener("click", () => TJ.gesture.toggle());
       TJ.$("#gestureStop").addEventListener("click", () => TJ.gesture.stop());
       TJ.$("#btnPico").addEventListener("click", () => TJ.pico.show("editor"));
+      TJ.$("#btnSphere").addEventListener("click", () => TJ.landing.reopen());
 
       // command bar
       const runCmd = () => {
@@ -123,6 +124,7 @@ window.TJ = window.TJ || {};
     async boot() {
       TJ.editor.init();
       TJ.pico.init();
+      TJ.archive.init();
       this.bind();
       TJ.applyAccent();
       this.syncTopbar();
@@ -130,7 +132,7 @@ window.TJ = window.TJ || {};
       let restored = false;
       if (TJ.persist.has()) {
         restored = await TJ.persist.restore();
-        if (restored) TJ.toast("이전 작업을 불러왔습니다.");
+        if (restored) TJ.toast("Restored your previous work.");
       }
       this.syncTopbar();
       TJ.rerender();
@@ -140,7 +142,7 @@ window.TJ = window.TJ || {};
       try { await TJ.landing.init(false); } catch (e) { console.error(e); }
 
       if (!restored) TJ.$("#cmdInput").setAttribute("placeholder",
-        "명령 입력 —  “촬영 시간순으로 정리”, “밤 사진을 오른쪽에”, “제목을 왼쪽 위에 크게”");
+        "Command —  “sort by capture time”, “night photos to the right”, “title top-left, large”");
     },
   };
 

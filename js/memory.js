@@ -46,7 +46,7 @@ window.TJ = window.TJ || {};
   const Memory = {
     build() {
       const photos = TJ.photos.all();
-      if (!photos.length) { TJ.toast("먼저 사진을 불러오세요."); return; }
+      if (!photos.length) { TJ.toast("Import photos first."); return; }
       const m = TJ.grid.metrics();
       const list = ordered();
       const groups = clusters(list);
@@ -91,7 +91,7 @@ window.TJ = window.TJ || {};
       TJ.applyAccent();
       TJ.editor.selectedId = null;
       TJ.rerender(); TJ.index.render();
-      TJ.toast(`Memory Grid — ${groups.length}개 묶음 · 사진 ${items.length}장 배치`);
+      TJ.toast(`Memory Grid — ${groups.length} groups · ${items.length} photos placed`);
     },
   };
 

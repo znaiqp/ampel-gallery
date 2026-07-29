@@ -57,15 +57,15 @@ window.TJ = window.TJ || {};
       const video = TJ.$("#gestureVideo");
       this.hud = TJ.$("#gestureHud");
       overlay.hidden = false;
-      this.setHud("초기화 중… (최초 1회 모델 로드)");
+      this.setHud("Initialising… (first-time model load)");
 
       // 1) load the tasks-vision HandLandmarker
       try {
         await this.loadLandmarker();
       } catch (e) {
         console.error(e);
-        this.setHud("손 추적 모델을 불러오지 못했습니다. 오프라인이거나 차단되었을 수 있습니다.");
-        TJ.toast("MediaPipe 로드 실패 — 마우스 편집은 정상 동작합니다.", 3200);
+        this.setHud("Couldn't load the hand-tracking model. You may be offline or blocked.");
+        TJ.toast("MediaPipe failed to load — mouse editing still works.", 3200);
         return;
       }
 
@@ -76,14 +76,14 @@ window.TJ = window.TJ || {};
         await video.play();
       } catch (e) {
         console.error(e);
-        this.setHud("웹캠 접근이 거부되었습니다.");
-        TJ.toast("웹캠을 사용할 수 없습니다 — 마우스 편집은 정상 동작합니다.", 3200);
+        this.setHud("Webcam access was denied.");
+        TJ.toast("Webcam unavailable — mouse editing still works.", 3200);
         return;
       }
 
       this.active = true;
       TJ.$("#btnGesture").classList.add("btn--solid");
-      this.setHud("손을 화면에 보여주세요.");
+      this.setHud("Show your hand to the camera.");
       this.loop();
     },
 
@@ -133,13 +133,13 @@ window.TJ = window.TJ || {};
 
       // landing (sphere) mode: palm spins the sphere instead of moving items
       if (TJ.landing && TJ.landing.isActive()) {
-        if (!hands.length) { this.setHud("손 없음"); return; }
-        this.setHud("손바닥으로 구를 굴리거나, 오므려 사진 선택");
+        if (!hands.length) { this.setHud("No hand"); return; }
+        this.setHud("Palm to roll the sphere · pinch to select");
         TJ.landing.onHand(hands);
         return;
       }
 
-      if (!hands.length) { this.setHud("손 없음"); this.twoHandBase = null; this.pinchStable = 0; return; }
+      if (!hands.length) { this.setHud("No hand"); this.twoHandBase = null; this.pinchStable = 0; return; }
       if (hands.length >= 2) { this.handleTwoHands(hands); return; }
       this.twoHandBase = null;
       this.handleOneHand(hands[0]);
@@ -163,22 +163,22 @@ window.TJ = window.TJ || {};
       if (pinch) {
         const now = performance.now();
         if (!this.pinchStable) this.pinchStable = now;
-        this.setHud("선택 중… 오므린 손 유지");
+        this.setHud("Selecting… hold the pinch");
         if (now - this.pinchStable > DWELL_MS) {
           this.selectAt(cx, cy);
           this.pinchStable = now + 1e6;   // debounce until released
         }
       } else {
         this.pinchStable = 0;
-        if (openPalm && TJ.editor.selectedId) { this.moveSelectedTo(cx, cy); this.setHud("이동 — 손바닥을 움직이세요"); }
-        else this.setHud(openPalm ? "손바닥 — 먼저 대상을 선택하세요" : "손 인식됨");
+        if (openPalm && TJ.editor.selectedId) { this.moveSelectedTo(cx, cy); this.setHud("Move — move your palm"); }
+        else this.setHud(openPalm ? "Palm — select a target first" : "Hand detected");
       }
     },
 
     handleTwoHands(hands) {
       const d = this.dist(hands[0][0], hands[1][0]);
-      if (this.twoHandBase == null) { this.twoHandBase = d; this.setHud("양손 — 벌리거나 좁혀 크기 조절"); return; }
-      if (!TJ.editor.selectedId) { this.setHud("양손 — 먼저 대상을 선택하세요"); return; }
+      if (this.twoHandBase == null) { this.twoHandBase = d; this.setHud("Two hands — spread or pinch to resize"); return; }
+      if (!TJ.editor.selectedId) { this.setHud("Two hands — select a target first"); return; }
       const ratio = d / this.twoHandBase;
       const m = TJ.grid.metrics();
       const it = TJ.Store.itemById(TJ.editor.selectedId);
@@ -186,11 +186,11 @@ window.TJ = window.TJ || {};
       if (ratio > 1.25) {
         this.twoHandBase = d;
         TJ.Store.commit(() => { const t = TJ.Store.itemById(it.id); t.gw = TJ.clamp(t.gw + 1, 1, m.cols - t.gx); t.gh = TJ.clamp(t.gh + 1, 1, m.rows - t.gy); }, "gesture-grow");
-        TJ.rerender(); this.setHud("양손 크기 조절 · 확대");
+        TJ.rerender(); this.setHud("Two-hand resize · larger");
       } else if (ratio < 0.8) {
         this.twoHandBase = d;
         TJ.Store.commit(() => { const t = TJ.Store.itemById(it.id); t.gw = Math.max(1, t.gw - 1); t.gh = Math.max(1, t.gh - 1); }, "gesture-shrink");
-        TJ.rerender(); this.setHud("양손 크기 조절 · 축소");
+        TJ.rerender(); this.setHud("Two-hand resize · smaller");
       }
     },
 
@@ -200,7 +200,7 @@ window.TJ = window.TJ || {};
       for (let i = s.items.length - 1; i >= 0; i--) {
         const r = TJ.grid.pxRect(s.items[i], m);
         if (cx >= r.left && cx <= r.left + r.width && cy >= r.top && cy <= r.top + r.height) {
-          TJ.editor.select(s.items[i].id); TJ.toast("제스처 선택"); return;
+          TJ.editor.select(s.items[i].id); TJ.toast("Gesture select"); return;
         }
       }
     },

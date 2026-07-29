@@ -24,16 +24,29 @@ window.TJ = window.TJ || {};
     return set;
   }
 
-  // synthesized pedestrian-signal patterns (Web Audio; no copyrighted samples)
+  // synthesized pedestrian-signal patterns (Web Audio; no copyrighted samples).
+  // Each is a stylised nod to that country's real crossing sound.
   function signalPattern(country) {
-    const tick = (f, n) => Array.from({ length: n }, () => ({ f, d: 0.05, gap: 0.09, type: "square" }));
+    const tick = (f, n, gap) => Array.from({ length: n }, () => ({ f, d: 0.05, gap: gap != null ? gap : 0.09, type: "square" }));
+    const accel = (f, n) => Array.from({ length: n }, (_, i) => ({ f, d: 0.05, gap: 0.18 - i * (0.11 / n), type: "square" }));
     const P = {
-      "Japan":         [{ f: 988, d: 0.16 }, { f: 784, d: 0.32, gap: 0.12 }, { f: 988, d: 0.16 }, { f: 784, d: 0.32 }],
-      "South Korea":   [{ f: 1318, d: 0.09, gap: 0.05 }, { f: 1318, d: 0.09, gap: 0.05 }, { f: 1568, d: 0.22 }],
-      "USA":           tick(1200, 8),
-      "United Kingdom":[{ f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1 }],
-      "Germany":       [{ f: 880, d: 0.7, type: "square" }],
-      "Australia":     tick(900, 6),
+      "Japan":          [{ f: 988, d: 0.16 }, { f: 784, d: 0.32, gap: 0.12 }, { f: 988, d: 0.16 }, { f: 784, d: 0.32 }], // "kakkō" cuckoo
+      "South Korea":    [{ f: 1318, d: 0.09, gap: 0.05 }, { f: 1318, d: 0.09, gap: 0.05 }, { f: 1568, d: 0.22 }],        // chirp + rise
+      "USA":            tick(1200, 8),                                                                                   // rapid chirp
+      "Canada":         tick(1100, 7),
+      "United Kingdom": [{ f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1 }],
+      "Ireland":        tick(1400, 10, 0.04),                                                                            // fast Dublin-style buzz
+      "Germany":        [{ f: 880, d: 0.7, type: "square" }],                                                            // steady tone
+      "Austria":        [{ f: 830, d: 0.18, type: "square", gap: 0.06 }, { f: 830, d: 0.5, type: "square" }],
+      "Australia":      accel(900, 8),                                                                                   // slow ticks -> fast burst
+      "Taiwan":         accel(1500, 10),                                                                                 // countdown accelerando
+      "Singapore":      tick(1600, 9, 0.06),
+      "Netherlands":    tick(1000, 6, 0.11),
+      "France":         [{ f: 740, d: 0.14, gap: 0.05 }, { f: 988, d: 0.14, gap: 0.05 }, { f: 740, d: 0.14, gap: 0.05 }, { f: 988, d: 0.2 }],
+      "Denmark":        tick(1245, 8, 0.07),
+      "Switzerland":    [{ f: 1046, d: 0.5, type: "square" }],
+      "Sweden":         tick(1175, 7, 0.1),
+      "Norway":         tick(1175, 7, 0.1),
     };
     return P[country] || [{ f: 784, d: 0.14, gap: 0.06 }, { f: 988, d: 0.14, gap: 0.06 }, { f: 1176, d: 0.24 }];
   }
@@ -57,6 +70,8 @@ window.TJ = window.TJ || {};
       this.canvas = TJ.$("#picoCanvas");
       this.ctx = this.canvas.getContext("2d");
       this.figure = buildFigure();
+      this.figureSet = new Set(this.figure);
+      this.showHints = true;
       this.setupCanvas();
       this.bind();
       this.redraw();
@@ -75,6 +90,11 @@ window.TJ = window.TJ || {};
     show(from, meta) {
       this.opener = from || "editor";
       this.country = (meta && meta.country) || this.country || "";
+      this.refUrl = (meta && meta.refUrl) || "";
+      const ref = TJ.$("#picoRef");
+      if (this.refUrl) { ref.style.backgroundImage = `url("${this.refUrl}")`; ref.classList.add("is-on"); }
+      else { ref.style.backgroundImage = ""; ref.classList.remove("is-on"); }
+      this.archivedThisDrawing = false;
       TJ.$("#pico").hidden = false;
       this.open = true;
       this.deactivate();
@@ -109,9 +129,10 @@ window.TJ = window.TJ || {};
         this.color = b.getAttribute("data-color");
       }));
       TJ.$("#picoUndo").addEventListener("click", () => this.undo());
-      TJ.$("#picoClear").addEventListener("click", () => { this.pushUndo(); this.grid.fill(0); this.redraw(); });
+      TJ.$("#picoClear").addEventListener("click", () => { this.pushUndo(); this.grid.fill(0); this.archivedThisDrawing = false; this.redraw(); });
       TJ.$("#picoSave").addEventListener("click", () => this.exportPNG());
       TJ.$("#picoClose").addEventListener("click", () => this.hide());
+      TJ.$("#picoX").addEventListener("click", () => this.hide());
       TJ.$("#picoGesture").addEventListener("click", () => TJ.gesture.toggle());
     },
 
@@ -158,11 +179,23 @@ window.TJ = window.TJ || {};
       const ctx = this.ctx, rad = DOT * 0.4;
       ctx.clearRect(0, 0, COLS * DOT, ROWS * DOT);
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-        const v = this.grid[r * COLS + c];
-        ctx.beginPath();
-        ctx.arc(c * DOT + DOT / 2, r * DOT + DOT / 2, rad, 0, 7);
-        ctx.fillStyle = v ? CODE_COLOR[v] : OFF;
-        ctx.fill();
+        const idx = r * COLS + c;
+        const v = this.grid[idx];
+        const cx = c * DOT + DOT / 2, cy = r * DOT + DOT / 2;
+        if (v) {
+          ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7);
+          ctx.fillStyle = CODE_COLOR[v]; ctx.fill();
+        } else if (this.showHints && !this.activated && this.figureSet.has(idx)) {
+          // faint guide dot: trace these to complete the walking figure
+          ctx.beginPath(); ctx.arc(cx, cy, rad * 0.62, 0, 7);
+          ctx.fillStyle = "rgba(34,197,94,0.24)"; ctx.fill();
+          ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7);
+          ctx.strokeStyle = "rgba(34,197,94,0.18)"; ctx.lineWidth = 1; ctx.stroke();
+        } else {
+          // translucent OFF dots when a reference photo is showing through
+          ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7);
+          ctx.fillStyle = this.refUrl ? "rgba(150,150,150,0.30)" : OFF; ctx.fill();
+        }
       }
       this.checkFigure();
     },
@@ -181,9 +214,13 @@ window.TJ = window.TJ || {};
     activate() {
       this.activated = true;
       TJ.$("#pico").classList.add("is-lit");
-      const label = this.country ? `${this.country} 보행 신호 켜짐` : "보행 신호 켜짐";
-      const p = TJ.$(".pico-head p"); if (p) { p.dataset.orig = p.dataset.orig || p.textContent; p.textContent = "● " + label + " — 신호음 재생"; }
+      const label = this.country ? `${this.country} walk signal — ON` : "Walk signal — ON";
+      const p = TJ.$(".pico-head p"); if (p) { p.dataset.orig = p.dataset.orig || p.textContent; p.textContent = "● " + label + " · sound playing"; }
       this.playSignal();
+      if (!this.archivedThisDrawing && TJ.archive) {
+        this.archivedThisDrawing = true;
+        TJ.archive.add({ country: this.country, dataUrl: this.renderCanvas(3, 3).toDataURL("image/png") });
+      }
     },
     deactivate() {
       if (!this.activated && !TJ.$("#pico").classList.contains("is-lit")) return;
@@ -212,26 +249,30 @@ window.TJ = window.TJ || {};
         }
         t += s.d + (s.gap != null ? s.gap : 0.02);
       });
-      TJ.toast(this.country ? `${this.country} 신호음` : "신호음 재생");
+      TJ.toast(this.country ? `${this.country} signal sound` : "Signal sound");
     },
 
-    exportPNG() {
-      const S = 4, pad = 3;
+    // render the grid onto a fresh canvas (used by PNG export and the archive)
+    renderCanvas(S, pad) {
+      S = S || 4; pad = pad != null ? pad : 3;
       const w = (COLS + pad * 2) * DOT * S, h = (ROWS + pad * 2) * DOT * S;
       const cv = document.createElement("canvas");
       cv.width = w; cv.height = h;
       const ctx = cv.getContext("2d");
-      ctx.fillStyle = "#141414"; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, w, h);
       const rad = DOT * S * 0.4, off = pad * DOT * S;
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
         const v = this.grid[r * COLS + c];
         ctx.beginPath();
         ctx.arc(off + c * DOT * S + DOT * S / 2, off + r * DOT * S + DOT * S / 2, rad, 0, 7);
-        ctx.fillStyle = v ? CODE_COLOR[v] : "#242424";
+        ctx.fillStyle = v ? CODE_COLOR[v] : "#1e1e1e";
         ctx.fill();
       }
-      cv.toBlob((b) => TJ.download(b, "signal-pictogram-" + Date.now() + ".png"), "image/png");
-      TJ.toast("픽토그램 PNG 저장됨");
+      return cv;
+    },
+    exportPNG() {
+      this.renderCanvas(4, 3).toBlob((b) => TJ.download(b, "signal-pictogram-" + Date.now() + ".png"), "image/png");
+      TJ.toast("Pictogram saved as PNG");
     },
 
     /* ---- hand drawing (called from gesture.js when pico is active) ----
@@ -251,10 +292,10 @@ window.TJ = window.TJ || {};
       if (penDown) {
         if (!this.handDrawing) { this.pushUndo(); this.handDrawing = true; this.lastCell = null; }
         this.paintCell(this.cellFromClient(sx, sy));
-        TJ.gesture.setHud("그리는 중 — 손가락이 지나가는 점이 켜집니다");
+        TJ.gesture.setHud("Drawing — dots light up as your finger passes");
       } else {
         this.handDrawing = false; this.lastCell = null;
-        TJ.gesture.setHud("검지를 펴서 점 위를 지나가면 그려집니다 · 주먹은 펜 올리기");
+        TJ.gesture.setHud("Extend your index finger over the dots to draw · fist = pen up");
       }
     },
   };

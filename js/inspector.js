@@ -58,15 +58,15 @@ window.TJ = window.TJ || {};
           : el("input", { type: "text", placeholder: ph });
         c.value = s.meta[key] || "";
         c.addEventListener("change", () => TJ.Store.commit((st) => { st.meta[key] = c.value; }, "meta"));
-        const add = el("button", { class: "btn", text: "그리드에 추가", style: "margin-top:6px;width:100%",
+        const add = el("button", { class: "btn", text: "Add to grid", style: "margin-top:6px;width:100%",
           onclick: () => TJ.main.addMetaText(key) });
         return el("div", {}, [field(label, c), add]);
       };
       return section("PROJECT", [
-        mk("title", "제목", "여행 제목"),
-        mk("place", "장소", "도시 · 국가"),
-        mk("date", "날짜", "2024.05 — 05"),
-        mk("note", "메모", "짧은 기록", true),
+        mk("title", "Title", "Trip title"),
+        mk("place", "Place", "City · Country"),
+        mk("date", "Date", "2024.05 — 05"),
+        mk("note", "Note", "Short note", true),
       ]);
     },
 
@@ -74,20 +74,20 @@ window.TJ = window.TJ || {};
       const m = TJ.grid.metrics();
       const p = TJ.photos.get(it.photoId);
       const rows = [];
-      rows.push(field("가로칸", stepper(it.gw, 1, m.cols, (v) =>
+      rows.push(field("Cols (w)", stepper(it.gw, 1, m.cols, (v) =>
         TJ.Store.commit((s) => { const t = TJ.Store.itemById(it.id); t.gw = v; if (t.gx + v > m.cols) t.gx = m.cols - v; }, "size") || TJ.rerender())));
-      rows.push(field("세로칸", stepper(it.gh, 1, m.rows, (v) =>
+      rows.push(field("Rows (h)", stepper(it.gh, 1, m.rows, (v) =>
         TJ.Store.commit((s) => { const t = TJ.Store.itemById(it.id); t.gh = v; if (t.gy + v > m.rows) t.gy = m.rows - v; }, "size") || TJ.rerender())));
 
       const zVal = el("span", { class: "val", text: (it.zoom || 1).toFixed(2) + "×" });
-      rows.push(field("확대", el("div", { style: "display:flex;gap:8px;align-items:center;flex:1" }, [
+      rows.push(field("Zoom", el("div", { style: "display:flex;gap:8px;align-items:center;flex:1" }, [
         range(1, 6, 0.01, it.zoom || 1, (v) => { TJ.Store.update((s) => { TJ.Store.itemById(it.id).zoom = v; }, "zoom"); zVal.textContent = v.toFixed(2) + "×"; TJ.grid.renderItems(); }),
         zVal,
       ])));
 
       const cropBtn = el("button", { class: "btn" + (TJ.editor.cropId === it.id ? " btn--solid" : ""),
-        text: TJ.editor.cropId === it.id ? "크롭 종료" : "크롭 / 위치", onclick: () => TJ.editor.toggleCrop(it.id) });
-      const resetBtn = el("button", { class: "btn", text: "위치 초기화",
+        text: TJ.editor.cropId === it.id ? "Exit crop" : "Crop / reposition", onclick: () => TJ.editor.toggleCrop(it.id) });
+      const resetBtn = el("button", { class: "btn", text: "Reset position",
         onclick: () => { TJ.Store.commit((s) => { const t = TJ.Store.itemById(it.id); t.offx = 0; t.offy = 0; t.zoom = 1; }, "reset-img"); TJ.rerender(); } });
       rows.push(field(null, el("div", { class: "btn-row" }, [cropBtn, resetBtn])));
 

@@ -81,10 +81,10 @@ window.TJ = window.TJ || {};
         img.onerror = () => resolve(rec);   // keep going even if one fails
         img.src = url;
       }))).then((recs) => {
-        const ok = recs.filter((r) => r.w > 0);
-        ok.forEach((r) => TJ.photos.map.set(r.id, r));
-        TJ.photos.order = ok.length;
-        return ok;
+        // sphere/gallery/AR/pico use these records directly; they are intentionally
+        // NOT added to the editor photo store, so the grid editor stays empty for
+        // the user's own travel photos.
+        return recs.filter((r) => r.w > 0);
       });
     },
 
@@ -105,7 +105,7 @@ window.TJ = window.TJ || {};
         this.tiles.push({ node, lon, lat, rec });
       });
       TJ.$("#landingHint").textContent =
-        `세계의 신호등 ${n}점 · 손바닥으로 굴리거나 드래그해서 밀어보세요 · 클릭하면 배치가 시작됩니다`;
+        `${n} signals of the world · roll with your palm or drag to spin · click to begin`;
     },
 
     /* ---- rotation loop ---- */
@@ -158,23 +158,35 @@ window.TJ = window.TJ || {};
       stage.addEventListener("pointerup", end);
       stage.addEventListener("pointercancel", () => { this.dragging = false; this._downTile = null; });
 
-      TJ.$("#landingEnter").addEventListener("click", () => this.enterEditor());
-      TJ.$("#landingBack").addEventListener("click", () => this.toSphere());
-      TJ.$("#landingArcNav").addEventListener("click", () => this.focus(this.focusIndex >= 0 ? this.focusIndex : 0));
-      TJ.$("#landingGesture").addEventListener("click", () => TJ.gesture.toggle());
-      TJ.$("#landingPico").addEventListener("click", () => { this.hide(); TJ.pico.show("landing"); });
+      // null-safe binding so a stale/partial DOM can never abort setup
+      const on = (id, ev, fn) => { const el = TJ.$("#" + id); if (el) el.addEventListener(ev, fn); };
+
+      on("landingEnter", "click", () => this.enterEditor());
+      on("landingBack", "click", () => this.toSphere());
+      on("landingArcNav", "click", () => this.focus(this.focusIndex >= 0 ? this.focusIndex : 0));
+      on("landingGesture", "click", () => TJ.gesture.toggle());
+      on("landingPico", "click", () => { this.hide(); TJ.pico.show("landing"); });
 
       // click the centred photo -> step into the location (AR + glassmorphism)
       const frame = TJ.$(".gallery__frame");
       if (frame) frame.addEventListener("click", () => this.openAR(this.focusIndex));
 
-      TJ.$("#arClose").addEventListener("click", () => this.closeAR());
-      TJ.$("#arPico").addEventListener("click", () => {
+      on("arClose", "click", () => this.closeAR());
+      on("arX", "click", () => this.closeAR());
+      on("arPico", "click", () => {
         const rec = this.records[this.focusIndex];
-        this.closeAR(true); this.hide();
-        TJ.pico.show("landing", { country: rec && rec.country });
+        this.closeAR(); this.hide();
+        TJ.pico.show("landing", { country: rec && rec.country, refUrl: rec && rec.url });
       });
-      TJ.$("#arEnter").addEventListener("click", () => { this.closeAR(true); this.enterEditor(); });
+
+      on("landingArchiveNav", "click", () => TJ.archive.open());
+
+      // top-right close: AR -> gallery -> sphere -> editor
+      on("landingX", "click", () => {
+        if (!TJ.$("#ar").hidden) this.closeAR();
+        else if (this.mode === "gallery") this.toSphere();
+        else this.enterEditor();
+      });
     },
 
     fmtLat(lat) {
@@ -196,7 +208,14 @@ window.TJ = window.TJ || {};
       TJ.$("#arCity").textContent = rec.city ? rec.city.toUpperCase() : "";
       TJ.$("#arLat").textContent = this.fmtLat(rec.lat);
       TJ.$("#arCoord").textContent = this.fmtCoord(rec.lat, rec.lon);
-      TJ.$("#arHint").textContent = rec.city ? `${rec.city} — 이 신호가 있는 곳으로 들어왔습니다` : "사진 속 장소로 들어왔습니다";
+      TJ.$("#arHint").textContent = rec.city ? `${rec.city} — you've stepped into this signal's home` : "You've stepped into the location";
+      // per-country signal brand (bottom chip, links out)
+      const brandEl = TJ.$("#arBrand");
+      if (rec.brand) {
+        brandEl.hidden = false;
+        brandEl.href = rec.brandUrl || "#";
+        brandEl.innerHTML = `<span class="ar__brand-k">SIGNAL BRAND</span> ${rec.brand} ↗`;
+      } else { brandEl.hidden = true; }
       TJ.$("#ar").hidden = false;
       if (rec.accent) { TJ.Store.update((s) => { s.accent = rec.accent; }, "accent"); TJ.applyAccent(); }
     },
@@ -253,12 +272,22 @@ window.TJ = window.TJ || {};
     /* ---- hand to editor ---- */
     enterEditor() {
       this.hide();
-      // if the canvas is empty, offer an instant Memory-Grid arrangement
-      const hasItems = TJ.Store.get().items.length > 0;
+      TJ.$("#ar").hidden = true;
       TJ.index.render();
-      if (!hasItems) { TJ.memory.build(); }
-      else { TJ.rerender(); }
-      TJ.toast("그리드 편집 모드 — 인덱스에서 사진을 끌어오거나 편집하세요.");
+      TJ.rerender();
+      TJ.toast("Grid editor — import your own photos from the index.");
+    },
+
+    // reopen the main signal sphere from the editor / elsewhere
+    reopen() {
+      if (!this.records.length) { TJ.toast("Sphere is not available."); return; }
+      TJ.$("#ar").hidden = true;
+      TJ.$("#pico").hidden = true;
+      TJ.$("#archive").hidden = true;
+      this.toSphere();
+      TJ.$("#landing").hidden = false;
+      this.shown = true;
+      this.spin();
     },
 
     hide() {
