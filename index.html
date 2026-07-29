@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Journal — Your journey becomes its own grid</title>
-<link rel="stylesheet" href="css/style.css?v=2" />
+<title>Ampel.zip</title>
+<meta name="description" content="Signals of the world — spin the globe, step into a location, and draw your own pedestrian pictogram." />
+<!-- link-preview name shown when shared -->
+<meta property="og:title" content="Ampel.zip" />
+<meta property="og:site_name" content="Ampel.zip" />
+<meta property="og:type" content="website" />
+<meta property="og:description" content="Signals of the world — spin the globe, step into a location, and draw your own pedestrian pictogram." />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Ampel.zip" />
+<meta name="twitter:description" content="Signals of the world — draw your own pedestrian signal." />
+<link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
 
@@ -152,6 +161,7 @@
 
 <!-- ============ PICTOGRAM : dot-matrix signal maker ============ -->
 <div class="pico" id="pico" hidden>
+  <div class="pico-bg" id="picoBg"></div>
   <nav class="landing__nav">
     <span>SIGNAL</span><span class="is-current">PICTOGRAM</span>
   </nav>
@@ -187,6 +197,8 @@
       <button class="btn" id="picoClose">Close</button>
     </div>
   </div>
+  <!-- hidden YouTube player: plays the real country signal sound on completion -->
+  <div class="pico-yt" id="picoYt" aria-hidden="true"></div>
 </div>
 
 <!-- ============ AR : step into the location (glassmorphism) ============ -->
@@ -236,21 +248,22 @@
 <canvas id="exportCanvas" hidden></canvas>
 
 <!-- zero-dependency core, classic scripts, load order matters -->
-<script src="js/util.js?v=2"></script>
-<script src="js/exif.js?v=2"></script>
-<script src="js/state.js?v=2"></script>
-<script src="js/photos.js?v=2"></script>
-<script src="js/grid.js?v=2"></script>
-<script src="js/editor.js?v=2"></script>
-<script src="js/typography.js?v=2"></script>
-<script src="js/inspector.js?v=2"></script>
-<script src="js/memory.js?v=2"></script>
-<script src="js/commands.js?v=2"></script>
-<script src="js/export.js?v=2"></script>
-<script src="js/gesture.js?v=2"></script>
-<script src="js/landing.js?v=2"></script>
-<script src="js/picogram.js?v=2"></script>
-<script src="js/archive.js?v=2"></script>
-<script src="js/main.js?v=2"></script>
+<script src="js/util.js?v=3"></script>
+<script src="js/exif.js?v=3"></script>
+<script src="js/state.js?v=3"></script>
+<script src="js/photos.js?v=3"></script>
+<script src="js/grid.js?v=3"></script>
+<script src="js/editor.js?v=3"></script>
+<script src="js/typography.js?v=3"></script>
+<script src="js/inspector.js?v=3"></script>
+<script src="js/memory.js?v=3"></script>
+<script src="js/commands.js?v=3"></script>
+<script src="js/export.js?v=3"></script>
+<script src="js/gesture.js?v=3"></script>
+<script src="js/landing.js?v=3"></script>
+<script src="js/picogram.js?v=3"></script>
+<script src="js/youtube.js?v=3"></script>
+<script src="js/archive.js?v=3"></script>
+<script src="js/main.js?v=3"></script>
 </body>
 </html>

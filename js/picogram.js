@@ -91,9 +91,14 @@ window.TJ = window.TJ || {};
       this.opener = from || "editor";
       this.country = (meta && meta.country) || this.country || "";
       this.refUrl = (meta && meta.refUrl) || "";
-      const ref = TJ.$("#picoRef");
-      if (this.refUrl) { ref.style.backgroundImage = `url("${this.refUrl}")`; ref.classList.add("is-on"); }
-      else { ref.style.backgroundImage = ""; ref.classList.remove("is-on"); }
+      const ref = TJ.$("#picoRef"), bg = TJ.$("#picoBg");
+      if (this.refUrl) {
+        ref.style.backgroundImage = `url("${this.refUrl}")`; ref.classList.add("is-on");
+        bg.style.backgroundImage = `url("${this.refUrl}")`; bg.classList.add("is-on");
+      } else {
+        ref.style.backgroundImage = ""; ref.classList.remove("is-on");
+        bg.style.backgroundImage = ""; bg.classList.remove("is-on");
+      }
       this.archivedThisDrawing = false;
       TJ.$("#pico").hidden = false;
       this.open = true;
@@ -216,13 +221,15 @@ window.TJ = window.TJ || {};
       TJ.$("#pico").classList.add("is-lit");
       const label = this.country ? `${this.country} walk signal — ON` : "Walk signal — ON";
       const p = TJ.$(".pico-head p"); if (p) { p.dataset.orig = p.dataset.orig || p.textContent; p.textContent = "● " + label + " · sound playing"; }
-      this.playSignal();
+      // play the country's real signal sound from YouTube; synth is the fallback
+      if (!(TJ.ytSound && TJ.ytSound.play(this.country))) this.playSignal();
       if (!this.archivedThisDrawing && TJ.archive) {
         this.archivedThisDrawing = true;
         TJ.archive.add({ country: this.country, dataUrl: this.renderCanvas(3, 3).toDataURL("image/png") });
       }
     },
     deactivate() {
+      if (TJ.ytSound) TJ.ytSound.stop();
       if (!this.activated && !TJ.$("#pico").classList.contains("is-lit")) return;
       this.activated = false;
       TJ.$("#pico").classList.remove("is-lit");
