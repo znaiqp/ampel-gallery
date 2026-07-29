@@ -11,6 +11,33 @@ window.TJ = window.TJ || {};
   const CODE = { green: 1, red: 2, amber: 3, erase: 0 };
   const CODE_COLOR = { 1: COLORS.green, 2: COLORS.red, 3: COLORS.amber };
 
+  // reference walking-pedestrian silhouette (source 7x11), scaled into the grid
+  const WALK = ["0000000","0011000","0011000","0000000","0111100","1011010",
+                "0011000","0011000","0101000","0100100","1100110"];
+  function buildFigure() {
+    const fw = 14, fh = 22, offX = Math.floor((COLS - fw) / 2), offY = Math.floor((ROWS - fh) / 2);
+    const set = [];
+    for (let r = 0; r < fh; r++) for (let c = 0; c < fw; c++) {
+      const sr = Math.floor(r * 11 / fh), sc = Math.floor(c * 7 / fw);
+      if (WALK[sr] && WALK[sr][sc] === "1") set.push((offY + r) * COLS + (offX + c));
+    }
+    return set;
+  }
+
+  // synthesized pedestrian-signal patterns (Web Audio; no copyrighted samples)
+  function signalPattern(country) {
+    const tick = (f, n) => Array.from({ length: n }, () => ({ f, d: 0.05, gap: 0.09, type: "square" }));
+    const P = {
+      "Japan":         [{ f: 988, d: 0.16 }, { f: 784, d: 0.32, gap: 0.12 }, { f: 988, d: 0.16 }, { f: 784, d: 0.32 }],
+      "South Korea":   [{ f: 1318, d: 0.09, gap: 0.05 }, { f: 1318, d: 0.09, gap: 0.05 }, { f: 1568, d: 0.22 }],
+      "USA":           tick(1200, 8),
+      "United Kingdom":[{ f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1, gap: 0.05 }, { f: 1046, d: 0.1 }],
+      "Germany":       [{ f: 880, d: 0.7, type: "square" }],
+      "Australia":     tick(900, 6),
+    };
+    return P[country] || [{ f: 784, d: 0.14, gap: 0.06 }, { f: 988, d: 0.14, gap: 0.06 }, { f: 1176, d: 0.24 }];
+  }
+
   const Pico = {
     open: false,
     grid: new Uint8Array(COLS * ROWS),
@@ -19,12 +46,17 @@ window.TJ = window.TJ || {};
     opener: "editor",
     lastCell: null,
     handCell: null,
+    country: "",
+    figure: null,
+    activated: false,
+    audio: null,
 
     isActive() { return this.open; },
 
     init() {
       this.canvas = TJ.$("#picoCanvas");
       this.ctx = this.canvas.getContext("2d");
+      this.figure = buildFigure();
       this.setupCanvas();
       this.bind();
       this.redraw();
@@ -40,14 +72,17 @@ window.TJ = window.TJ || {};
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     },
 
-    show(from) {
+    show(from, meta) {
       this.opener = from || "editor";
+      this.country = (meta && meta.country) || this.country || "";
       TJ.$("#pico").hidden = false;
       this.open = true;
+      this.deactivate();
       this.redraw();
     },
     hide() {
       this.open = false;
+      this.deactivate();
       TJ.$("#pico").hidden = true;
       TJ.$("#handCursor").hidden = true;
       if (this.opener === "landing" && TJ.landing && TJ.landing.shown === false) {
@@ -129,6 +164,55 @@ window.TJ = window.TJ || {};
         ctx.fillStyle = v ? CODE_COLOR[v] : OFF;
         ctx.fill();
       }
+      this.checkFigure();
+    },
+
+    // when the drawing fills the pedestrian silhouette >=80%, "activate" the
+    // signal: background goes black and the country's signal sound plays.
+    checkFigure() {
+      if (!this.figure) return;
+      let hit = 0;
+      for (const idx of this.figure) if (this.grid[idx]) hit++;
+      const cov = hit / this.figure.length;
+      if (cov >= 0.8 && !this.activated) this.activate();
+      else if (cov < 0.6 && this.activated) this.deactivate();
+    },
+
+    activate() {
+      this.activated = true;
+      TJ.$("#pico").classList.add("is-lit");
+      const label = this.country ? `${this.country} 보행 신호 켜짐` : "보행 신호 켜짐";
+      const p = TJ.$(".pico-head p"); if (p) { p.dataset.orig = p.dataset.orig || p.textContent; p.textContent = "● " + label + " — 신호음 재생"; }
+      this.playSignal();
+    },
+    deactivate() {
+      if (!this.activated && !TJ.$("#pico").classList.contains("is-lit")) return;
+      this.activated = false;
+      TJ.$("#pico").classList.remove("is-lit");
+      const p = TJ.$(".pico-head p"); if (p && p.dataset.orig) p.textContent = p.dataset.orig;
+    },
+
+    ensureAudio() {
+      if (!this.audio) { try { this.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+      if (this.audio.state === "suspended") this.audio.resume();
+      return this.audio;
+    },
+    playSignal() {
+      const ac = this.ensureAudio(); if (!ac) return;
+      const seq = signalPattern(this.country);
+      let t = ac.currentTime + 0.03;
+      seq.forEach((s) => {
+        if (s.f > 0) {
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.type = s.type || "sine"; o.frequency.value = s.f;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + s.d);
+          o.connect(g).connect(ac.destination); o.start(t); o.stop(t + s.d + 0.03);
+        }
+        t += s.d + (s.gap != null ? s.gap : 0.02);
+      });
+      TJ.toast(this.country ? `${this.country} 신호음` : "신호음 재생");
     },
 
     exportPNG() {

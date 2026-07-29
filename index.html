@@ -180,6 +180,28 @@
   </div>
 </div>
 
+<!-- ============ AR : step into the location (glassmorphism) ============ -->
+<div class="ar" id="ar" hidden>
+  <div class="ar__bg" id="arBg"></div>
+  <div class="ar__scrim"></div>
+  <aside class="ar__panel ar__panel--l glass" id="arPanelL">
+    <div class="ar__k">COUNTRY</div>
+    <div class="ar__country" id="arCountry"></div>
+    <div class="ar__city" id="arCity"></div>
+  </aside>
+  <aside class="ar__panel ar__panel--r glass" id="arPanelR">
+    <div class="ar__k">LATITUDE</div>
+    <div class="ar__lat" id="arLat"></div>
+    <div class="ar__coord" id="arCoord"></div>
+  </aside>
+  <div class="ar__hint" id="arHint">사진 속 장소로 들어왔습니다</div>
+  <div class="ar__actions">
+    <button class="glass-btn" id="arPico">＋ 신호등 픽토그램</button>
+    <button class="glass-btn" id="arEnter">그리드로 가져가기 →</button>
+    <button class="glass-btn" id="arClose">닫기</button>
+  </div>
+</div>
+
 <!-- gesture pointer dot (shown while drawing by hand) -->
 <div class="hand-cursor" id="handCursor" hidden></div>
 

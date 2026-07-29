@@ -44,22 +44,35 @@ window.TJ = window.TJ || {};
     },
 
     async loadManifest() {
-      try {
-        const res = await fetch("assets/lights/manifest.json", { cache: "no-store" });
-        if (!res.ok) return null;
-        const arr = await res.json();
-        return Array.isArray(arr) ? arr : null;
-      } catch (e) { return null; }
+      // prefer real Unsplash photos, fall back to the bundled SVG signal set
+      for (const path of ["assets/unsplash.json", "assets/lights/manifest.json"]) {
+        try {
+          const res = await fetch(path, { cache: "no-store" });
+          if (!res.ok) continue;
+          const arr = await res.json();
+          if (Array.isArray(arr) && arr.length) return arr;
+        } catch (e) { /* try next */ }
+      }
+      return null;
     },
 
     loadPhotos(names) {
       return Promise.all(names.map((entry, i) => new Promise((resolve) => {
-        const name = typeof entry === "string" ? entry : entry.file;
-        const city = typeof entry === "string" ? "" : (entry.city || "");
-        const code = typeof entry === "string" ? "" : (entry.code || "");
-        const url = "assets/lights/" + encodeURIComponent(name);
+        const isStr = typeof entry === "string";
+        const name = isStr ? entry : (entry.file || entry.url);
+        const abs = /^https?:/i.test(name);
+        const url = abs ? name : "assets/lights/" + encodeURIComponent(name);
         const img = new Image();
-        const rec = { id: TJ.uid("ph"), name, city, code, url, img, w: 0, h: 0, time: null, gps: null, accent: "#111111", order: i };
+        if (abs) img.crossOrigin = "anonymous";   // Unsplash CDN sends ACAO:* -> canvas-safe
+        const rec = {
+          id: TJ.uid("ph"), name, url, img, w: 0, h: 0, time: null, gps: null,
+          accent: "#111111", order: i,
+          city: isStr ? "" : (entry.city || ""),
+          country: isStr ? "" : (entry.country || ""),
+          code: isStr ? "" : (entry.code || ""),
+          lat: isStr ? null : (entry.lat != null ? entry.lat : null),
+          lon: isStr ? null : (entry.lon != null ? entry.lon : null),
+        };
         img.onload = () => {
           rec.w = img.naturalWidth; rec.h = img.naturalHeight;
           try { rec.accent = TJ.extractAccent(img); } catch (e) {}
@@ -151,10 +164,43 @@ window.TJ = window.TJ || {};
       TJ.$("#landingGesture").addEventListener("click", () => TJ.gesture.toggle());
       TJ.$("#landingPico").addEventListener("click", () => { this.hide(); TJ.pico.show("landing"); });
 
-      // click the centred photo again -> open the square dot-matrix pictogram maker
+      // click the centred photo -> step into the location (AR + glassmorphism)
       const frame = TJ.$(".gallery__frame");
-      if (frame) frame.addEventListener("click", () => { this.hide(); TJ.pico.show("landing"); });
+      if (frame) frame.addEventListener("click", () => this.openAR(this.focusIndex));
+
+      TJ.$("#arClose").addEventListener("click", () => this.closeAR());
+      TJ.$("#arPico").addEventListener("click", () => {
+        const rec = this.records[this.focusIndex];
+        this.closeAR(true); this.hide();
+        TJ.pico.show("landing", { country: rec && rec.country });
+      });
+      TJ.$("#arEnter").addEventListener("click", () => { this.closeAR(true); this.enterEditor(); });
     },
+
+    fmtLat(lat) {
+      if (lat == null) return "—";
+      return Math.abs(lat).toFixed(2) + "° " + (lat >= 0 ? "N" : "S");
+    },
+    fmtCoord(lat, lon) {
+      if (lat == null || lon == null) return "";
+      return `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? "E" : "W"}`;
+    },
+
+    openAR(i) {
+      const rec = this.records[i];
+      if (!rec) return;
+      const bg = TJ.$("#arBg");
+      bg.style.backgroundImage = `url("${rec.url}")`;
+      bg.style.animation = "none"; void bg.offsetWidth; bg.style.animation = "";  // restart zoom
+      TJ.$("#arCountry").textContent = rec.country || rec.city || "Unknown";
+      TJ.$("#arCity").textContent = rec.city ? rec.city.toUpperCase() : "";
+      TJ.$("#arLat").textContent = this.fmtLat(rec.lat);
+      TJ.$("#arCoord").textContent = this.fmtCoord(rec.lat, rec.lon);
+      TJ.$("#arHint").textContent = rec.city ? `${rec.city} — 이 신호가 있는 곳으로 들어왔습니다` : "사진 속 장소로 들어왔습니다";
+      TJ.$("#ar").hidden = false;
+      if (rec.accent) { TJ.Store.update((s) => { s.accent = rec.accent; }, "accent"); TJ.applyAccent(); }
+    },
+    closeAR() { TJ.$("#ar").hidden = true; },
 
     /* ---- gallery selection (Paprika-style) ---- */
     focus(i) {
