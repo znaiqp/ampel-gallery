@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Journal — Your journey becomes its own grid</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app" class="app">
+
+  <!-- ============ LEFT : IMAGE INDEX ============ -->
+  <aside class="index" id="index">
+    <div class="index__head">
+      <div class="index__title">INDEX</div>
+      <div class="index__count" id="indexCount">00</div>
+    </div>
+    <div class="index__drop" id="indexDrop">
+      <p>이미지를 여기에 끌어다 놓거나</p>
+      <label class="btn btn--ghost">
+        파일 선택
+        <input type="file" id="fileInput" accept="image/*" multiple hidden />
+      </label>
+    </div>
+    <ol class="index__list" id="indexList"></ol>
+  </aside>
+
+  <!-- ============ CENTER : STAGE ============ -->
+  <main class="stage">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <span class="topbar__logo">JOURNAL</span>
+        <span class="topbar__tag">Your journey becomes its own grid</span>
+      </div>
+
+      <div class="topbar__group">
+        <div class="seg" data-seg="columns" title="칼럼 수">
+          <button data-val="6">6</button>
+          <button data-val="8" class="is-active">8</button>
+          <button data-val="12">12</button>
+        </div>
+        <div class="seg" data-seg="ratio" title="캔버스 비율">
+          <button data-val="portrait" class="is-active">세로</button>
+          <button data-val="square">정사각</button>
+          <button data-val="landscape">가로</button>
+        </div>
+        <button class="btn btn--toggle is-active" id="toggleGrid" title="그리드 표시">그리드</button>
+      </div>
+
+      <div class="topbar__group">
+        <button class="btn" id="btnUndo" title="실행 취소 (Ctrl+Z)">↶</button>
+        <button class="btn" id="btnRedo" title="다시 실행 (Ctrl+Shift+Z)">↷</button>
+        <button class="btn" id="btnMemory" title="촬영 데이터로 자동 배치">Memory Grid</button>
+        <button class="btn" id="btnText" title="텍스트 추가">＋ 텍스트</button>
+      </div>
+
+      <div class="topbar__group">
+        <button class="btn" id="btnSave" title="브라우저에 저장">저장</button>
+        <button class="btn" id="btnExportJson" title="JSON으로 내보내기">.json</button>
+        <label class="btn btn--ghost" title="JSON 불러오기">
+          불러오기<input type="file" id="jsonInput" accept="application/json,.json" hidden />
+        </label>
+        <button class="btn btn--solid" id="btnExportPng" title="고해상도 PNG">PNG</button>
+        <button class="btn" id="btnExportPdf" title="PDF">PDF</button>
+      </div>
+    </header>
+
+    <div class="canvas-scroll" id="canvasScroll">
+      <div class="canvas-frame" id="canvasFrame">
+        <div class="canvas" id="canvas">
+          <div class="grid-lines" id="gridLines"></div>
+          <div class="items" id="items"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="cmdbar">
+      <span class="cmdbar__prompt">⌘</span>
+      <input type="text" id="cmdInput" class="cmdbar__input"
+             placeholder="명령을 입력하세요 —  예: “사진을 촬영 시간순으로 정리해 줘”" />
+      <button class="btn btn--solid" id="cmdRun">실행</button>
+      <button class="btn" id="btnGesture" title="웹캠 손동작 편집">손동작</button>
+    </footer>
+  </main>
+
+  <!-- ============ RIGHT : INSPECTOR ============ -->
+  <aside class="inspector" id="inspector">
+    <div class="inspector__empty" id="inspectorEmpty">
+      <p>선택된 요소가 없습니다.</p>
+      <p class="muted">인덱스에서 사진을 캔버스로 끌어오거나 요소를 선택하세요.</p>
+    </div>
+    <div class="inspector__body" id="inspectorBody" hidden></div>
+  </aside>
+
+  <!-- gesture overlay -->
+  <div class="gesture-overlay" id="gestureOverlay" hidden>
+    <video id="gestureVideo" autoplay playsinline muted></video>
+    <canvas id="gestureCanvas"></canvas>
+    <div class="gesture-hud" id="gestureHud">손 인식 준비 중…</div>
+    <button class="btn btn--solid gesture-stop" id="gestureStop">손동작 끄기</button>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<!-- offscreen canvas for export -->
+<canvas id="exportCanvas" hidden></canvas>
+
+<!-- zero-dependency core, classic scripts, load order matters -->
+<script src="js/util.js"></script>
+<script src="js/exif.js"></script>
+<script src="js/state.js"></script>
+<script src="js/photos.js"></script>
+<script src="js/grid.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/typography.js"></script>
+<script src="js/inspector.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/commands.js"></script>
+<script src="js/export.js"></script>
+<script src="js/gesture.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
